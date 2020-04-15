@@ -4,7 +4,8 @@ import { isServerRendering } from 'core/util/env'
 import { FunctionalRenderContext } from 'core/vdom/create-functional-component'
 
 initGlobalAPI(Vue)
-// use、mixin、extend、'component','directive','filter'
+// Vue.config、util、set、delete、nextTick、observable、options
+// Vue.use、mixin、extend、initAssetRegisters:'component','directive','filter'
 
 Object.defineProperty(Vue.prototype, '$isServer', {
   get: isServerRendering

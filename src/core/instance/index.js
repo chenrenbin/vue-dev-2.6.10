@@ -15,25 +15,27 @@ function Vue (options) {
 }
 
 initMixin(Vue)
-//  $parent、$root、$children、$refs
-//  $attrs、$listeners
-// callHook(vm, 'beforeCreate')
-// initInjections
-// props、methods、data、computed、watch
-// initProvide
-// callHook(vm, 'created')
-// vm.$mount(vm.$options.el)
+// Vue.prototype._init:
+//    $parent、$root、$children、$refs
+//    $attrs、$listeners
+//    callHook(vm, 'beforeCreate')
+//    initInjections
+//    props、methods、data、computed、watch
+//    initProvide
+//    callHook(vm, 'created')
+//    vm.$mount(vm.$options.el)
 
 stateMixin(Vue)
-// $data、$props、$set、$delete、$watch
+// Vue.prototype.$data、$props、$set、$delete、$watch
 
 eventsMixin(Vue)
-// $on、$once、$off、$emit
+// Vue.prototype.$on、$once、$off、$emit
 
 lifecycleMixin(Vue)
-// _update、$forceUpdate、$destroy
+// Vue.prototype._update、$forceUpdate、$destroy
 
 renderMixin(Vue)
-// $nextTick、_rende
+// install runtime convenience helpers
+// Vue.prototype.$nextTick、_rende
 
 export default Vue
