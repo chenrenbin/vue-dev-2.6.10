@@ -20,11 +20,13 @@ const genStaticKeysCached = cached(genStaticKeys)
  */
 export function optimize (root: ?ASTElement, options: CompilerOptions) {
   if (!root) return
+  // 判断是否是静态的属性
   isStaticKey = genStaticKeysCached(options.staticKeys || '')
+  // 判断是否是平台保留的标签，html 或者 svg 的
   isPlatformReservedTag = options.isReservedTag || no
-  // first pass: mark all non-static nodes.
+  // first pass: mark all non-static nodes.---第一遍遍历: 给所有静态节点打上是否是静态节点的标记
   markStatic(root)
-  // second pass: mark static roots.
+  // second pass: mark static roots.---第二遍遍历:标记所有静态根节点
   markStaticRoots(root, false)
 }
 

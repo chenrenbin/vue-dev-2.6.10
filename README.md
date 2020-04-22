@@ -153,6 +153,7 @@ vm = {
 ### 执行Vue.$mount(vm.$options.el)
 ```
 vm = {
+编译阶段：
   if (!$options.render) {
     获取模板信息：
       idToTemplate(template) / template.innerHTML / getOuterHTML(el)
@@ -160,8 +161,9 @@ vm = {
       $options.render,
       $options.staticRenderFns 
   }
-
-  $options.render,
+  
+运行时阶段---mountComponent(this, el, hydrating)：
+  ?$options.render,
 
   执行$options内所有生命周期钩子beforeMount:
     callHook(vm, 'beforeMount'),
@@ -180,4 +182,50 @@ vm = {
   执行$options内所有生命周期钩子mounted:
     callHook(vm, 'mounted')
 }
+```
+
+### 编译模板挂载render渲染函数
+```
+src\platforms\web\entry-runtime-with-compiler.js
+>> {render,staticRenderFns} = compileToFunctions(template, {...}, this)
+
+src\platforms\web\compiler\index.js
+>> createCompiler(baseOptions)返回{ compile, compileToFunctions }
+
+src\compiler\index.js
+>> createCompilerCreator(baseCompile(template, option))返回createCompiler
+
+src\compiler\create-compiler.js
+>> 返回createCompiler(baseOptions)：
+>>>>  初始化新compile(template,option,vm)
+>>>>  返回{compile,compileToFunctions:createCompileToFunctionFn(compile)}
+
+src\compiler\to-function.js
+>> 返回res并缓存：{render,staticRenderFns}
+
+PS：函数柯里化：
+  createCompilerCreator(baseCompile(template, option))(baseOptions).compileToFunctions(template, {...}, this)
+
+#### 模板编译器---baseCompile(template, option)
+  1.解析器parse(template.trim(), options)
+    HTML解析：属性,v-for,v-if,v-on...---使用了栈辅助标签的闭合
+    文本解析：文档头,{{变量}}
+    注释解析: <!--注释-->,IE注释<!***]>
+
+  2.优化器optimize(ast, options)
+    在AST中找出所有静态节点并打标记（static）
+    在AST中找出所有静态根节点并打标记（staticRoot）
+    除外：根节点只有一个文本节点; 一个没有子节点的静态节点
+
+  3.生成器generate(ast, options)
+    元素AST节点： _c(, , )
+    文本AST节点： _v(“Hello”+_s(name))
+    注释节点： _e(text)
+
+  return {
+    render: `with(this){return ${code}}`,
+    staticRenderFns: state.staticRenderFns
+  }
+  
+  PS: 正则表达式；栈的使用；递归算法；
 ```

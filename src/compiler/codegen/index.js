@@ -44,7 +44,9 @@ export function generate (
   ast: ASTElement | void,
   options: CompilerOptions
 ): CodegenResult {
+  // 这就是编译的一些参数
   const state = new CodegenState(options)
+  // 生成 render 字符串
   const code = ast ? genElement(ast, state) : '_c("div")'
   return {
     render: `with(this){return ${code}}`,
