@@ -153,7 +153,7 @@ vm = {
 ### 执行Vue.$mount(vm.$options.el)
 ```
 vm = {
-编译阶段：
+编译阶段---compileToFunctions(template, {...}, this)：
   if (!$options.render) {
     获取模板信息：
       idToTemplate(template) / template.innerHTML / getOuterHTML(el)
@@ -161,14 +161,14 @@ vm = {
       $options.render,
       $options.staticRenderFns 
   }
-  
+
 运行时阶段---mountComponent(this, el, hydrating)：
   ?$options.render,
 
   执行$options内所有生命周期钩子beforeMount:
     callHook(vm, 'beforeMount'),
 
-  注册生命周期事件beforeUpdate监听：
+  生成渲染watcher：
     new Watcher(vm, updateComponent, noop, {
       before () {
         if (vm._isMounted && !vm._isDestroyed) {
@@ -229,3 +229,20 @@ PS：函数柯里化：
   
   PS: 正则表达式；栈的使用；递归算法；
 ```
+
+### 生成渲染watcher，虚拟Dom渲染成真实Dom
+```
+src\core\observer\watcher.js
+>> 执行updateComponent = () => {  vm._update(vm._render(), hydrating) }
+
+src\core\instance\render.js
+>> 得到虚拟DOM---vm._render()：vnode = render.call(vm._renderProxy, vm.$createElement)
+
+src\core\instance\lifecycle.js
+>> 更新/创建真实DOM---vm._update
+    vm.__patch__：diff算法得出要变更的DOM，依赖options.el获取的页面元素发挥DOM接口挂载新DOM
+    diff：vnode文本标签？直接替换：patch子元素(oldVnode和newVnode前后元素的对等/交叉对比；key的快捷查找判断)
+      
+  PS：各种递归操作
+```
+
