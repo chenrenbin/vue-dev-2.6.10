@@ -133,7 +133,7 @@ vm = {
    initInjections(vm)---初始化injections:
     defineReactive(vm, key, result[key]),
   
-  initState(vm)---初始化状态(数据):
+  initState(vm)---初始化状态(数据,包含数据劫持):
     defineReactive(props, key, value),
     vm[key] = typeof methods[key] !== 'function' ? noop : bind(methods[key], vm),
     observe(data, true /* asRootData */),
@@ -244,5 +244,88 @@ src\core\instance\lifecycle.js
     diff：vnode文本标签？直接替换：patch子元素(oldVnode和newVnode前后元素的对等/交叉对比；key的快捷查找判断)
       
   PS：各种递归操作
+```
+
+### 响应式原理：数据劫持--依赖收集--发布订阅
+```
+src\core\instance\state.js
+>> 执行initState(vm)：props,data,computed,watch
+  1.Props初始化---initProps(vm, opts.props)
+    defineReactive(props, key, value)
+      数据劫持：
+      Object.defineProperty(obj, key, {
+        get:function reactiveGetter(){
+          ....
+          依赖收集
+          if (Dep.target) {
+            dep.depend()
+            ?childOb.dep.depend()
+          }
+        },
+        set:function reactiveSetter(){
+          通知更新
+          dep.notify()
+        }
+      })
+
+    proxy(vm, `_props`, key)
+
+  2.Data初始化---initData(vm)
+    proxy(vm, `_data`, key)
+
+    observe(data, true /* asRootData */)
+      ob = new Observer(data)
+        this.walk(value)
+           defineReactive(obj, keys[i])
+              同props
+
+  3.Computed初始化---initComputed(vm, opts.computed)
+    watchers[key] = vm._computedWatchers = new Watcher(
+      vm,
+      getter || noop,
+      noop,
+      computedWatcherOptions
+    )
+
+    defineComputed(vm, key, userDef)
+      Object.defineProperty(target, key, sharedPropertyDefinition)
+        sharedPropertyDefinition={
+          get: shouldCache ? createComputedGetter(key) : createGetterInvoker(userDef)
+          set：noop
+        }
+        createComputedGetter(key):
+          const watcher = this._computedWatchers && this._computedWatchers[key]
+          if (Dep.target) {
+            watcher.depend()
+          }
+
+  4.Watch初始化---initWatch(vm, opts.watch)
+    Array.isArray(handler)?createWatcher(vm, key, handler[i]):createWatcher(vm, key, handler)
+      isPlainObject(handler)?options = handler;handler = handler.handler:handler = vm[handler]
+      vm.$watch(expOrFn, handler, options)
+        isPlainObject(cb)
+          ? createWatcher(vm, expOrFn, cb, options)
+          : const watcher = new Watcher(vm, expOrFn, cb, options);options.immediate?cb.call(vm, watcher.value)
+```
+
+### 更新队列---dep.notify(){subs[i].update()}
+```
+src\core\observer\watcher.js
+  subs[i].update(): this.sync
+    ? this.run()---updateComponent()
+    : queueWatcher(this)
+
+src\core\observer\scheduler.js
+  queueWatcher (watcher: Watcher)---收集要更新的watcher
+    nextTick(flushSchedulerQueue)
+      timerFunc()---异步执行flushSchedulerQueue队列：Promise > MutationObserver > setImmediate > setTimeout
+    flushSchedulerQueue：
+      for(){ 
+        watcher.before(): callHook(vm, 'beforeUpdate')
+        watcher.run()
+      }    
+      resetSchedulerState()
+      callActivatedHooks(activatedQueue): for(){activateChildComponent(queue[i], true /* true */)}
+      callUpdatedHooks(updatedQueue): callHook(vm, 'updated')
 ```
 
